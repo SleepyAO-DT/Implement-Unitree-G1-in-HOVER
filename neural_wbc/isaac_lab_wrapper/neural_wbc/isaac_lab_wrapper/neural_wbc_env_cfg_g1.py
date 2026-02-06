@@ -59,7 +59,7 @@ class NeuralWBCEnvCfgG1(NeuralWBCEnvCfg):
     # General parameters:
     action_space = 23
     observation_space = 1073
-    state_space = 1163
+    state_space = 1162
 
     # Distillation parameters:
     single_history_dim = 63
@@ -74,15 +74,25 @@ class NeuralWBCEnvCfgG1(NeuralWBCEnvCfg):
     # Robot geometry / actuation parameters:
     actuators = {
         "legs": IdealPDActuatorCfg(
-            joint_names_expr=[".*_hip_pitch_joint", ".*_hip_roll_joint", ".*_hip_yaw_joint", ".*_knee_joint", ".*_ankle_pitch_joint", ".*_ankle_roll_joint", 'waist_pitch_joint'],
+            joint_names_expr=[
+                ".*_hip_pitch_joint",
+                ".*_hip_roll_joint",
+                ".*_hip_yaw_joint",
+                ".*_knee_joint",
+                ".*_ankle_pitch_joint",
+                "waist_yaw_joint",
+                "waist_roll_joint",
+                "waist_pitch_joint",
+            ],
             effort_limit={
                 ".*_hip_pitch_joint": 88.0,
                 ".*_hip_roll_joint": 88.0,
                 ".*_hip_yaw_joint": 88.0,
                 ".*_knee_joint": 139.0,
                 ".*_ankle_pitch_joint": 50.0,
-                ".*_ankle_roll_joint": 50.0,
-                'waist_pitch_joint': 50.0,
+                "waist_yaw_joint": 88.0,
+                "waist_roll_joint": 50.0,
+                "waist_pitch_joint": 50.0,
             },
             velocity_limit={
                 ".*_hip_pitch_joint": 32.0,
@@ -90,8 +100,9 @@ class NeuralWBCEnvCfgG1(NeuralWBCEnvCfg):
                 ".*_hip_yaw_joint": 32.0,
                 ".*_knee_joint": 20.0,
                 ".*_ankle_pitch_joint": 37.0,
-                ".*_ankle_roll_joint": 37.0,
-                'waist_pitch_joint': 37.0,
+                "waist_yaw_joint": 32.0,
+                "waist_roll_joint": 37.0,
+                "waist_pitch_joint": 37.0,
             },
             stiffness=0,
             damping=0,
@@ -187,7 +198,7 @@ class NeuralWBCEnvCfgG1(NeuralWBCEnvCfg):
 
     feet_name = ".*_ankle_roll_link"
 
-    extend_body_parent_names = ["left_elbow_link",   "right_elbow_link", "torso_link"]
+    extend_body_parent_names = ["left_elbow_link", "right_elbow_link", "torso_link"]
     extend_body_names = ["left_hand_link", "right_hand_link", "head_link"]
     extend_body_pos = torch.tensor([[0.25, 0, 0], [0.25, 0, 0], [0, 0, 0.42]])
 
@@ -281,19 +292,32 @@ class NeuralWBCEnvCfgG1(NeuralWBCEnvCfg):
         'left_hip_yaw_link', 
         'left_hip_roll_link', 
         'left_hip_pitch_link', 
-        'left_knee_link',
         'right_hip_yaw_link', 
         'right_hip_roll_link', 
         'right_hip_pitch_link', 
-        'right_knee_link',
+        'torso_link',
     ]
 
     undesired_contact_body_names = [
         "pelvis",
-        ".*_yaw_link",
-        ".*_roll_link",
-        ".*_pitch_link",
-        ".*_knee_link",
+        "left_hip_pitch_link",
+        "left_hip_roll_link",
+        "left_hip_yaw_link",
+        "left_knee_link",
+        "left_ankle_pitch_link",
+        "right_hip_pitch_link",
+        "right_hip_roll_link",
+        "right_hip_yaw_link",
+        "right_knee_link",
+        "right_ankle_pitch_link",
+        "waist_yaw_link",
+        "waist_roll_link",
+        "left_shoulder_pitch_link",
+        "left_shoulder_roll_link",
+        "left_shoulder_yaw_link",
+        "right_shoulder_pitch_link",
+        "right_shoulder_roll_link",
+        "right_shoulder_yaw_link",
     ]
 
     # Add a height scanner to the torso to detect the height of the terrain mesh
@@ -311,7 +335,7 @@ class NeuralWBCEnvCfgG1(NeuralWBCEnvCfg):
         super().__post_init__()
 
         self.reference_motion_manager.motion_path = get_data_path("motions/amass_all_g1.pkl")
-        self.reference_motion_manager.skeleton_path = get_data_path("motion_lib/g1_29dof_anneal_23dof_without_wrist.xml")
+        self.reference_motion_manager.skeleton_path = get_data_path("motion_lib/g1_29dof_anneal_23dof.xml")
 
         if self.terrain.terrain_generator == HARD_ROUGH_TERRAINS_CFG:
             self.events.update_curriculum.params["penalty_level_up_threshold"] = 125

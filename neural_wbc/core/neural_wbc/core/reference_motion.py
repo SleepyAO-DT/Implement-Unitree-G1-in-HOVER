@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import List
 
 # TODO: Replace MotionLibH1 with the agnostic version when it's ready.
-#from phc.utils.motion_lib_h1 import MotionLibH1
+# from phc.utils.motion_lib_h1 import MotionLibH1
 from phc.utils.motion_lib_g1 import MotionLibG1
 from smpl_sim.poselib.skeleton.skeleton3d import SkeletonTree
 
@@ -183,6 +183,8 @@ class ReferenceMotionManager:
         terrain_heights: torch.Tensor | None = None,
         offset: torch.Tensor | None = None,
         quaternion_is_xyzw=True,
+        body_names: list[str] | None = None,
+        body_names_extend: list[str] | None = None,
     ) -> ReferenceMotionState:
         """Query a reference motion frame from motion lib."""
         motion_times = episode_length_buf * self._dt + self._motion_start_times
@@ -197,6 +199,44 @@ class ReferenceMotionManager:
                 motion_res["rg_pos"][:, :, 2] += delta_height
             if "rg_pos_t" in motion_res:
                 motion_res["rg_pos_t"][:, :, 2] += delta_height
+
+        # Reorder bodies to match the simulator body ordering, if requested.
+        if body_names is not None:
+            full_names = self.body_extended_names
+            remove_idx = getattr(self._motion_lib.mesh_parsers, "_remove_idx", 0)
+            if remove_idx > 0 and len(full_names) >= remove_idx:
+                base_names = full_names[:-remove_idx]
+            else:
+                base_names = full_names
+            base_index = {name: idx for idx, name in enumerate(base_names)}
+            missing = [name for name in body_names if name not in base_index]
+            if missing:
+                raise ValueError(f"Missing body names in reference motion: {missing}")
+            body_ids = [base_index[name] for name in body_names]
+            for key in ("rg_pos", "rb_rot", "body_vel", "body_ang_vel"):
+                if key in motion_res:
+                    motion_res[key] = motion_res[key][:, body_ids, ...]
+
+        if body_names_extend is not None and "rg_pos_t" in motion_res:
+            full_names = self.body_extended_names
+            full_index = {name: idx for idx, name in enumerate(full_names)}
+            missing = [name for name in body_names_extend if name not in full_index]
+            if missing:
+                raise ValueError(f"Missing extended body names in reference motion: {missing}")
+            body_ids_extend = [full_index[name] for name in body_names_extend]
+            for key in ("rg_pos_t", "rg_rot_t", "body_vel_t", "body_ang_vel_t"):
+                if key in motion_res:
+                    motion_res[key] = motion_res[key][:, body_ids_extend, ...]
+
+        # Keep root signals consistent with any body reordering.
+        if "rg_pos" in motion_res:
+            motion_res["root_pos"] = motion_res["rg_pos"][..., 0, :].clone()
+        if "rb_rot" in motion_res:
+            motion_res["root_rot"] = motion_res["rb_rot"][..., 0, :].clone()
+        if "body_vel" in motion_res:
+            motion_res["root_vel"] = motion_res["body_vel"][..., 0, :].clone()
+        if "body_ang_vel" in motion_res:
+            motion_res["root_ang_vel"] = motion_res["body_ang_vel"][..., 0, :].clone()
 
         # Update quaternion convention
         if quaternion_is_xyzw:
