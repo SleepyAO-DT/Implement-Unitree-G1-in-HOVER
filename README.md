@@ -48,7 +48,7 @@ Checklist:
 
 #### 4.1 Train Entry Point
 
-Change: if CLI flag `--robot g1`, use G1 config.
+Change: Modify the `train_teacher_policy.py` so that when the command line is input with `--robot g1`, the related files of `g1` are called.
 
 Checklist:
 - [ ] `train_teacher_policy` routes `--robot g1` to `NeuralWBCEnvCfgG1`.
@@ -75,6 +75,7 @@ Changes:
 	- `undesired_contact_body_names`
 	- `ref_motion_path`
 	- `ref_motion_skeleton_path`
+- ALL FROM: `g1_29dof_anneal_23dof.yaml`
 
 Checklist:
 - [ ] All names match G1 joint/body order.
@@ -87,9 +88,8 @@ File: `IsaacLab/source/isaaclab_assets/robots/unitree.py` (G1_CFG)
 
 Changes:
 - Use full `g1_29dof_anneal_23dof.usd`.
-- Adjust `init_state` per ASAP yaml.
-- Actuators replaced in 4.2.
-
+- Adjust `init_state` per ASAP `g1_29dof_anneal_23dof.yaml`.
+- Actuators replaced in step 4.2.
 Checklist:
 - [ ] USD path points to full G1 asset.
 - [ ] `init_state` matches ASAP yaml.
@@ -110,7 +110,7 @@ File: `third_party/human2humanoid/phc/phc/utils/motion_lib_g1.py`
 
 Changes:
 - Read `mjcf_file` from `g1_29dof_anneal_23dof_fitmotionONLY.xml`.
-- Fix AMASS data loading: nested motion-name key before frames.
+- Fix AMASS data loading: And when reading the motion data, read the inner layer data (bug of amass_all_g1.pkl, there is another key of motion name under the key of motion name, and then comes the frame-by-frame motion data).
 
 Checklist:
 - [ ] MJCF file points to 29-dof fitmotion XML.
@@ -123,8 +123,8 @@ File: `third_party/human2humanoid/phc/phc/utils/torch_g1_humanoid_batch.py`
 Changes:
 - Use `g1_29dof_anneal_23dof_fitmotionONLY.xml`.
 - Update `extend_hand` parent indices to 19, 26 (elbows).
-- Set `extend_hand` length to 0.25m (from g1.yaml).
-- Update `extend_head` similarly (g1.yaml).
+- Set `extend_hand` length to 0.25m (from `g1_29dof_anneal_23dof.yaml`).
+- Update `extend_head` similarly (`g1_29dof_anneal_23dof.yaml`).
 
 Checklist:
 - [ ] Parent indices match elbow links in XML order.
@@ -157,7 +157,7 @@ Checklist:
 File: `neural_wbc/isaac_lab_wrapper/neural_wbc/isaac_lab_wrapper/neural_wbc_env.py`
 
 Change:
-- Modify `self._body_ids_extend` to add hand/head ids.
+- Modified the reading logic for the body ids (including hands and head) added in `self._body_ids_extend`.
 - Exact ID logic still unclear.
 
 Checklist:
