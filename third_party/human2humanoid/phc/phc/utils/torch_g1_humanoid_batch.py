@@ -8,13 +8,14 @@ import smpl_sim.poselib.core.rotation3d as pRot
 
 class Humanoid_Batch:
 
-    def __init__(self, mjcf_file = f"resources/robots/g1/g1_29dof_anneal_23dof_without_wrist.xml", extend_hand = True, extend_head = False, device = torch.device("cpu")):
+    def __init__(self, mjcf_file = f"resources/robots/g1/g1_29dof_anneal_23dof_fitmotionONLY.xml", extend_hand = True, extend_head = False, device = torch.device("cpu")):
         self.mjcf_data = mjcf_data = self.from_mjcf(mjcf_file)
         self.extend_hand = extend_hand
         self.extend_head = extend_head
+        self.joint_names = list(mjcf_data.get("joint_names", []))
         if extend_hand:
             self.model_names = mjcf_data['node_names'] + ["left_hand_link", "right_hand_link"]
-            self._parents = torch.cat((mjcf_data['parent_indices'], torch.tensor([23, 31]))).to(device) # Adding the hands joints
+            self._parents = torch.cat((mjcf_data['parent_indices'], torch.tensor([19, 26]))).to(device) # Adding the hands joints
             arm_length = 0.25
             self._offsets = torch.cat((mjcf_data['local_translation'], torch.tensor([[arm_length, 0, 0], [arm_length, 0, 0]])), dim = 0)[None, ].to(device)
             self._local_rotation = torch.cat((mjcf_data['local_rotation'], torch.tensor([[1, 0, 0, 0], [1, 0, 0, 0]])), dim = 0)[None, ].to(device)
@@ -28,7 +29,7 @@ class Humanoid_Batch:
         if extend_head:
             self._remove_idx = 3
             self.model_names = self.model_names + ["head_link"]
-            self._parents = torch.cat((self._parents, torch.tensor([16]).to(device))).to(device) # Adding the heads joints
+            self._parents = torch.cat((self._parents, torch.tensor([15]).to(device))).to(device) # Adding the heads joints
             head_length = 0.42
             self._offsets = torch.cat((self._offsets, torch.tensor([[[0, 0, head_length]]]).to(device)), dim = 1).to(device)
             self._local_rotation = torch.cat((self._local_rotation, torch.tensor([[[1, 0, 0, 0]]]).to(device)), dim = 1).to(device)
@@ -52,6 +53,7 @@ class Humanoid_Batch:
         xml_joint_root = xml_body_root.find("joint")
         
         node_names = []
+        joint_names = []
         parent_indices = []
         local_translation = []
         local_rotation = []
@@ -70,7 +72,11 @@ class Humanoid_Batch:
             curr_index = node_index
             node_index += 1
             all_joints = xml_node.findall("joint")
+            
             for joint in all_joints:
+                joint_name = joint.attrib.get("name")
+                if joint_name is not None:
+                    joint_names.append(joint_name)
                 if not joint.attrib.get("range") is None: 
                     joints_range.append(np.fromstring(joint.attrib.get("range"), dtype=float, sep=" "))
             
@@ -81,6 +87,7 @@ class Humanoid_Batch:
         _add_xml_node(xml_body_root, -1, 0)
         return {
             "node_names": node_names,
+            "joint_names": joint_names,
             "parent_indices": torch.from_numpy(np.array(parent_indices, dtype=np.int32)),
             "local_translation": torch.from_numpy(np.array(local_translation, dtype=np.float32)),
             "local_rotation": torch.from_numpy(np.array(local_rotation, dtype=np.float32)),
@@ -92,7 +99,7 @@ class Humanoid_Batch:
         device, dtype = pose.device, pose.dtype
         pose_input = pose.clone()
         B, seq_len = pose.shape[:2]
-        pose = pose[..., :len(self._parents), :] # G1 fitted joints might have extra joints
+        pose = pose[..., :len(self._parents), :] # H1 fitted joints might have extra joints
         if self.extend_hand and self.extend_head and pose.shape[-2] == 26:
             pose = torch.cat([pose, torch.zeros(B, seq_len, 1, 3).to(device).type(dtype)], dim = -2) # adding hand and head joints
 

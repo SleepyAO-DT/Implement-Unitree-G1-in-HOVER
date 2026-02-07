@@ -179,11 +179,10 @@ if not USE_CACHE:
 
 class MotionLibG1(MotionLibBase):
 
-    def __init__(self, motion_file, device, fix_height=FixHeightMode.no_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True, extend_hand = True, extend_head = False, mjcf_file="resources/robots/g1/g1_29dof_anneal_23dof_without_wrist.xml", sim_timestep = 1/50):
+    def __init__(self, motion_file, device, fix_height=FixHeightMode.no_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True, extend_hand = True, extend_head = False, mjcf_file="resources/robots/g1/g1_29dof_anneal_23dof_fitmotionONLY.xml", sim_timestep = 1/50):
         super().__init__(motion_file=motion_file, device=device, fix_height=fix_height, masterfoot_conifg=masterfoot_conifg, min_length=min_length, im_eval=im_eval, multi_thread=multi_thread, sim_timestep = sim_timestep)
         # =============== 修复双层嵌套结构 ===============
         # 父类已经加载了数据，现在修复_motion_data_list中的数据格式
-        original_length = len(self._motion_data_list)
         fixed_data_list = []
         
         for i, data in enumerate(self._motion_data_list):
@@ -575,7 +574,6 @@ class MotionLibG1(MotionLibBase):
                 pose_aa[:, 0] = torch.tensor((heading_delta * sRot.from_rotvec(pose_aa[:, 0])).as_rotvec())
 
                 trans = torch.matmul(trans, torch.from_numpy(heading_delta.as_matrix().squeeze().T))
-
 
             # trans, trans_fix = MotionLibSMPL.fix_trans_height(pose_aa, trans, curr_gender_beta, mesh_parsers, fix_height_mode = fix_height)
             curr_motion = mesh_parsers.fk_batch(pose_aa[None, ], trans[None, ], return_full= True, dt = dt)
