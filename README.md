@@ -136,6 +136,7 @@ File: `neural_wbc/isaac_lab_wrapper/neural_wbc/isaac_lab_wrapper/rewards/reward_
 
 Changes:
 - Resize `torque_limits`, `joint_pos_limits`, `joint_vel_limits` to G1 size.
+- Adjust the value of those limits.
 - `max_contact_force = 200` (H1 was 500).
 
 Checklist:
@@ -172,7 +173,7 @@ Files:
 - `neural_wbc/core/neural_wbc/core/reference_motion.py`
 
 Change:
-- Added debug output for joint info.
+- Added debug output for bodies and joints info.
 
 Checklist:
 - [ ] Debug output shows correct joint/body order.
