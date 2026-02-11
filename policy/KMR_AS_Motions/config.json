@@ -1,0 +1,25 @@
+{
+    "student_policy_path": "/home/xie/HOVER/logs/student/h1:teacher_26_01_28_23-32-39",
+    "num_policy_obs": 913,
+    "num_student_obs": 1782,
+    "num_actions": 19,
+    "resume_path": "",
+    "checkpoint": "",
+    "num_steps_per_env": 1,
+    "max_iteration": 200000,
+    "save_iteration": 500,
+    "student_rollout_iteration": 0,
+    "learning_rate": 0.0005,
+    "max_grad_norm": 0.2,
+    "num_mini_batches": 1,
+    "num_learning_epochs": 1,
+    "dagger_coefficient": 1.0,
+    "policy_hidden_dims": [
+        512,
+        256,
+        128
+    ],
+    "activation": "elu",
+    "noise_std": 0.001,
+    "teacher_policy": "neural_wbc/data/data/policy/h1:teacher"
+}
